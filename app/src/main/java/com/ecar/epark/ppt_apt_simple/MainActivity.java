@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //1.方式1
-//        MainActivity$$BindView.bindView(this);
+//        MainActivit y$$BindView.bindView(this);
         //1.
         textView = (TextView) findViewById(R.id.tx_content);
         activity_main = findViewById(R.id.activity_main);
