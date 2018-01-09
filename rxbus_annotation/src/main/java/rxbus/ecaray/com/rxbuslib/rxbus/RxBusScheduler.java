@@ -16,7 +16,7 @@ public class RxBusScheduler {
     public static final String TRAMPOLINE = "trampoline";
     public static final String MAIN_THREAD = "main_thread";
 
-//    @StringDef({NEW_THREAD, COMPUTATION, IO, TRAMPOLINE, MAIN_THREAD})
+//    @StringDef({NEW_THREAD, COMPUT ATION, IO, TRAMPOLINE, MAIN_THREAD})
 //    @Retention(RetentionPolicy.SOURCE)
 //    public @interface Theme {
 //    }
