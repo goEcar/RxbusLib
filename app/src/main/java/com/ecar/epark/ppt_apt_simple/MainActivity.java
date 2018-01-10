@@ -7,8 +7,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import rxbus.ecaray.com.rxbuslib.rxbus.RxBus;
-import rxbus.ecaray.com.rxbuslib.rxbus.RxBusReact;
+//import rxbus.ecaray.com.rxbuslib.rxbus.RxBus;
+//import rxbus.ecaray.com.rxbuslib.rxbus.RxBusReact;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -24,24 +24,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //1.
         textView = (TextView) findViewById(R.id.tx_content);
         activity_main = findViewById(R.id.activity_main);
-        RxBus.getDefault().register(this);
-        textView.setText("APT");
-        textView.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                RxBus.getDefault().post("rxbus1","asb");
-            }
-        },2000);
-        activity_main.setOnClickListener(this);
+//        RxBus.getDefault().register(this);
+//        textView.setText("APT");
+//        textView.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                RxBus.getDefault().post("rxbus1","asb");
+//            }
+//        },2000);
+//        activity_main.setOnClickListener(this);
     }
 
-    @RxBusReact(clazz = String.class,tag = "asb")
-    public void testRxBus(String content){
-        textView.setText(content);
-    }
-
+//    @RxBusReact(clazz = String.class,tag = "asb")
+//    public void testRxBus(String content){
+//        textView.setText(content);
+//    }
+//
     @Override
     public void onClick(View v) {
-        RxBus.getDefault().post("rxbus2","asb");
+//        RxBus.getDefault().post("rxbus2","asb");
     }
 }
