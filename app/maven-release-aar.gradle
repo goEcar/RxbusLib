@@ -2,6 +2,7 @@
 apply plugin: 'maven'
 // 2.maven-信息
 ext {// ext is a gradle closure allowing the declaration of global properties
+    GITHUB_REPO_PATH = "D:\\mygit_lrmlibrary_organization_aar"
     PUBLISH_GROUP_ID = 'vdolrm.lrmlibrary'
     PUBLISH_ARTIFACT_ID = 'base'
     PUBLISH_VERSION = android.defaultConfig.versionName
@@ -9,7 +10,8 @@ ext {// ext is a gradle closure allowing the declaration of global properties
 // 3.maven-路径
 uploadArchives {
     repositories.mavenDeployer {
-        def deployPath = file(getProperty('aar.deployPath'))
+//        def deployPath = file(getProperty('aar.deployPath'))
+        def deployPath = file(project.GITHUB_REPO_PATH)
         repository(url: "file://${deployPath.absolutePath}")
         pom.project {
             groupId project.PUBLISH_GROUP_ID
