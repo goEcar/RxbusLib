@@ -1,6 +1,6 @@
 package com.example;
 
-//import com.google.auto.service.AutoService;
+import com.google.auto.service.AutoService;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -36,7 +36,7 @@ import javax.tools.Diagnostic;
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBusReact;
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBusScheduler;
 
-//@AutoService(Processor.class)
+@AutoService(Processor.class)
 public class DIEventProcess extends AbstractProcessor {
 
     private final static String COMPOSITE_DISPOSABLE_FIELD = "compositeDisposable";
