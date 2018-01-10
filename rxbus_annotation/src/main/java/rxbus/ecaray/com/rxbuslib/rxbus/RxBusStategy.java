@@ -1,7 +1,7 @@
 package rxbus.ecaray.com.rxbuslib.rxbus;
 
 
-public class RxBusStaregy {
+public class RxBusStategy {
 
 
     /**

@@ -34,6 +34,8 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBusReact;
+import rxbus.ecaray.com.rxbuslib.rxbus.RxBusScheduler;
+import rxbus.ecaray.com.rxbuslib.rxbus.RxBusStategy;
 
 @AutoService(Processor.class)
 public class DIEventProcess extends AbstractProcessor {
@@ -196,17 +198,19 @@ public class DIEventProcess extends AbstractProcessor {
             String methodName = methodData.methodName;
 
             String disposableName = methodName + "_disposable";
-            ClassName filterClazz  = ClassName.bestGuess(methodData.parameterClassFullName);
+//            ClassName filterClazz  = ClassName.bestGuess(methodData.parameterClassFullName);
+            String observeOn = generateInvokeRegisterCode(methodData.observeOn);
+            String subscribeOn = generateInvokeRegisterCode(methodData.subscribeOn);
             methodSpecBuilder.addStatement(
                     "$T " + disposableName + " = $T.getDefault()" +
 //                            ".filter(" +
 //                            generateFilterCode(methodData)+
                             ".register(" +
                             generateConsumerCode(SOURCE_PROXY_FIELD, methodName,methodData) +
-                            ","+methodData.parameterClassSimpleName+".class" + ",$S" + ",$S"+ ",$S" +",$S"+")"
+                            ","+methodData.parameterClassSimpleName+".class" + ",$S" + ","+subscribeOn+ ","+observeOn +",$S"+")"
                     , disposable, rxbusHelper
                     , consumer, defaultEventClazz, defaultEventClazz
-                    ,  methodData.tag , methodData.subscribeOn ,methodData.observeOn ,methodData.strategy
+                    ,  methodData.tag , methodData.strategy
             );
 
             methodSpecBuilder.addStatement("compositeDisposable.add(" + disposableName + ")");
@@ -352,6 +356,30 @@ public class DIEventProcess extends AbstractProcessor {
             typeString = element.getSimpleName().toString();
         }
         return typeString;
+    }
+
+    private String generateInvokeRegisterCode(String scheduler) {
+        StringBuilder codeBuilder = new StringBuilder();
+            switch (scheduler) {
+                case RxBusScheduler.MAIN_THREAD:
+                    codeBuilder.append("io.reactivex.android.schedulers.AndroidSchedulers.mainThread()");
+                    break;
+                case RxBusScheduler.IO:
+                    codeBuilder.append("io.reactivex.schedulers.Schedulers.io()");
+                    break;
+                case RxBusScheduler.NEW_THREAD:
+                    codeBuilder.append("io.reactivex.schedulers.Schedulers.newThread()");
+                    break;
+                case RxBusScheduler.COMPUTATION:
+                    codeBuilder.append("io.reactivex.schedulers.Schedulers.computation()");
+                    break;
+                case RxBusScheduler.TRAMPOLINE:
+                    codeBuilder.append("io.reactivex.schedulers.Schedulers.trampoline()");
+                    break;
+                default:
+                    break;
+        }
+        return codeBuilder.toString();
     }
 
     private MethodSpec generateUnRegisterMethodCode() {

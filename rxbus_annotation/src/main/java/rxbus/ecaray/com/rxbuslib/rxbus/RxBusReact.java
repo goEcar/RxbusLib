@@ -23,5 +23,5 @@ public @interface RxBusReact {
 
     String observeOn() default RxBusScheduler.MAIN_THREAD;
 
-    String strategy() default RxBusStaregy.DEFAULT;
+    String strategy() default RxBusStategy.DEFAULT;
 }

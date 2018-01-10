@@ -31,7 +31,8 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:25.1.1'
     testCompile 'junit:junit:4.12'
-    apt project(':rxbus_process')
-    compile project(':rxbus_annotation')
-    compile project(':rxbuslib')
+    compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
+//    apt project(':rxbus_process')
+    compile project(':rxbus_process')
+
 }

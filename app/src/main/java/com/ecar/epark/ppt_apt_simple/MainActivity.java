@@ -6,7 +6,6 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.annotation.DIView;
 
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBus;
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBusReact;
