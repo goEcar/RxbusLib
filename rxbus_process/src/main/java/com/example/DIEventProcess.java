@@ -35,7 +35,6 @@ import javax.tools.Diagnostic;
 
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBusReact;
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBusScheduler;
-import rxbus.ecaray.com.rxbuslib.rxbus.RxBusStategy;
 
 @AutoService(Processor.class)
 public class DIEventProcess extends AbstractProcessor {
