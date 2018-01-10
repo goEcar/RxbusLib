@@ -2,7 +2,7 @@
 apply plugin: 'maven'
 // 2.maven-信息
 ext {// ext is a gradle closure allowing the declaration of global properties
-    GITHUB_REPO_PATH = "D:\\mygit_lrmlibrary_organization_aar"
+    GITHUB_REPO_PATH = "C:\\repos"
     PUBLISH_GROUP_ID = 'vdolrm.lrmlibrary'
     PUBLISH_ARTIFACT_ID = 'base'
     PUBLISH_VERSION = android.defaultConfig.versionName
