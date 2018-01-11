@@ -7,6 +7,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.ecar.epark.simulationlib.TestBean;
+
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBus;
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBusReact;
 
@@ -29,17 +31,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         textView.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Tes a = new Tes();
-                a.a = "b";
-                RxBus.getDefault().post(a,"asb");
+                TestBean bean = new TestBean();
+                bean.setName("postDelayed");
+                RxBus.getDefault().post(bean,"asb");
             }
         },2000);
         activity_main.setOnClickListener(this);
     }
 
     @RxBusReact(clazz = Tes.class,tag = "asb")
-    public void testRxBus(Tes content){
-        textView.setText(content.a);
+    public void testRxBus(TestBean content){
+        textView.setText(content.getName());
     }
 
     public static class Tes{
@@ -48,8 +50,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-        Tes a = new Tes();
-        a.a = "a";
-        RxBus.getDefault().post(a,"asb");
+        TestBean bean = new TestBean();
+        bean.setName("onClick");
+        RxBus.getDefault().post(bean,"asb");
     }
 }

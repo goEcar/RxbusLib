@@ -6,7 +6,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.2.2'
-//        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
+        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
 //        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
         classpath 'com.novoda:bintray-release:0.4.0'
 
@@ -41,7 +41,7 @@ ext  {
 
     uploadName = 'rxbus'
     //版本号
-    publishVersion = "0.0.2"
+    publishVersion = "0.0.3"
     //描述，不重要
     desc = 'project rxbus desc '
     //网站，不重要

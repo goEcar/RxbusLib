@@ -388,9 +388,11 @@ public class DIEventProcess extends AbstractProcessor {
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override.class)
                 .returns(void.class);
+        methodSpecBuilder.addStatement(SOURCE_PROXY_FIELD + "= null");
         methodSpecBuilder.beginControlFlow(
                 "if (compositeDisposable != null && !compositeDisposable.isDisposed())");
         methodSpecBuilder.addStatement("compositeDisposable.dispose()");
+        methodSpecBuilder.addStatement("compositeDisposable = null");
 
         methodSpecBuilder.endControlFlow();
 
