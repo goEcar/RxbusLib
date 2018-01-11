@@ -206,10 +206,9 @@ public class DIEventProcess extends AbstractProcessor {
 //                            generateFilterCode(methodData)+
                             ".register(" +
                             generateConsumerCode(SOURCE_PROXY_FIELD, methodName,methodData) +
-                            ",$T"+".class" + ",$S" + ","+subscribeOn+ ","+observeOn +",$S"+")"
+                            ","+methodData.parameterClassFullName+".class" + ",$S" + ","+subscribeOn+ ","+observeOn +",$S"+")"
                     , disposable, rxbusHelper
                     , consumer, defaultEventClazz, defaultEventClazz,filterClazz
-                    ,filterClazz
                     ,  methodData.tag , methodData.strategy
             );
 
