@@ -1,8 +1,5 @@
 apply plugin: 'java'
-apply plugin: 'com.github.dcendents.android-maven'
 
-// Your Group
-group='com.github.goEcar'
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'io.reactivex.rxjava2:rxjava:2.1.1'
@@ -10,3 +7,23 @@ dependencies {
 
 sourceCompatibility = "1.7"
 targetCompatibility = "1.7"
+
+//添加
+apply plugin: 'com.novoda.bintray-release'
+publish {
+    //bintray.com用户名
+    userOrg = rootProject.userOrg
+//    //jcenter上的路径
+    groupId = rootProject.groupId
+    uploadName = rootProject.uploadName
+    //项目名称
+    artifactId = 'rxbus_annotation'
+    //版本号
+    publishVersion = rootProject.ext.publishVersion
+    //描述，不重要
+    desc = rootProject.description
+    //网站，不重要
+    website = rootProject.website
+
+    licences = rootProject.licences
+}

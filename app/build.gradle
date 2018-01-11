@@ -1,11 +1,11 @@
-apply plugin: 'com.android.library'
+apply plugin: 'com.android.application'
 //apply plugin: 'com.neenbedankt.android-apt'
 
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
     defaultConfig {
-//        applicationId "com.ecar.epark.ppt_apt_simple"
+        applicationId "com.ecar.epark.ppt_apt_simple"
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 1
@@ -34,4 +34,4 @@ dependencies {
     compile project(':rxbus_proxy')
 }
 //aar打包
-apply from: 'maven-release-aar.gradle'
+//apply from: 'maven-release-aar.gradle'

@@ -7,7 +7,8 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:2.2.2'
 //        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
+//        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
+        classpath 'com.novoda:bintray-release:0.4.0'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -18,8 +19,33 @@ allprojects {
     repositories {
         jcenter()
     }
+    //加上这些
+    tasks.withType(Javadoc) {
+        options{ encoding "UTF-8"
+            charSet 'UTF-8'
+            links "http://docs.oracle.com/javase/7/docs/api"
+        }
+    }
 }
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+//添加
+ext  {
+    //bintray.com用户名
+    userOrg = 'ecarsz2018'
+//    //jcenter上的路径
+    groupId = 'com.ecarsz'
+
+    uploadName = 'rxbus'
+    //版本号
+    publishVersion = "0.0.1"
+    //描述，不重要
+    desc = 'project rxbus desc '
+    //网站，不重要
+    website = 'https://github.com/goEcar/RxbusLib'
+
+    licences = ['Apache-2.0']
 }
