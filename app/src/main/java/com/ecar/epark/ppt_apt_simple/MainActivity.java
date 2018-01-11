@@ -29,19 +29,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         textView.postDelayed(new Runnable() {
             @Override
             public void run() {
-                RxBus.getDefault().post("rxbus1","asb");
+                Tes a = new Tes();
+                a.a = "b";
+                RxBus.getDefault().post(a,"asb");
             }
         },2000);
         activity_main.setOnClickListener(this);
     }
 
-    @RxBusReact(clazz = String.class,tag = "asb")
-    public void testRxBus(String content){
-        textView.setText(content);
+    @RxBusReact(clazz = Tes.class,tag = "asb")
+    public void testRxBus(Tes content){
+        textView.setText(content.a);
+    }
+
+    public static class Tes{
+        String a;
     }
 
     @Override
     public void onClick(View v) {
-        RxBus.getDefault().post("rxbus2","asb");
+        Tes a = new Tes();
+        a.a = "a";
+        RxBus.getDefault().post(a,"asb");
     }
 }

@@ -197,7 +197,7 @@ public class DIEventProcess extends AbstractProcessor {
             String methodName = methodData.methodName;
 
             String disposableName = methodName + "_disposable";
-//            ClassName filterClazz  = ClassName.bestGuess(methodData.parameterClassFullName);
+            ClassName filterClazz  = ClassName.bestGuess(methodData.parameterClassFullName);
             String observeOn = generateInvokeRegisterCode(methodData.observeOn);
             String subscribeOn = generateInvokeRegisterCode(methodData.subscribeOn);
             methodSpecBuilder.addStatement(
@@ -206,9 +206,10 @@ public class DIEventProcess extends AbstractProcessor {
 //                            generateFilterCode(methodData)+
                             ".register(" +
                             generateConsumerCode(SOURCE_PROXY_FIELD, methodName,methodData) +
-                            ","+methodData.parameterClassSimpleName+".class" + ",$S" + ","+subscribeOn+ ","+observeOn +",$S"+")"
+                            ",$T"+".class" + ",$S" + ","+subscribeOn+ ","+observeOn +",$S"+")"
                     , disposable, rxbusHelper
-                    , consumer, defaultEventClazz, defaultEventClazz
+                    , consumer, defaultEventClazz, defaultEventClazz,filterClazz
+                    ,filterClazz
                     ,  methodData.tag , methodData.strategy
             );
 
@@ -236,7 +237,8 @@ public class DIEventProcess extends AbstractProcessor {
                         "@Override\n" +
                         "public void accept($T o) throws Exception {\n" +
                             "if("+sourceInstanceName+"==null)return;\n"+
-                        sourceInstanceName + "." + sourceInstanceMethodName + "(("+methodData.parameterClassSimpleName+")o.getObj());\n" +
+//                        sourceInstanceName + "." + sourceInstanceMethodName + "(("+methodData.parameterClassSimpleName+")o.getObj());\n" +
+                        sourceInstanceName + "." + sourceInstanceMethodName + "(($T)o.getObj());\n" +
                         "}\n" +
                         "}";
     }

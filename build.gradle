@@ -35,9 +35,9 @@ task clean(type: Delete) {
 //添加
 ext  {
     //bintray.com用户名
-    userOrg = 'ecarsz2018'
+    userOrg = 'yichekeji'
 //    //jcenter上的路径
-    groupId = 'com.ecarsz'
+    groupId = 'com.yichekeji'
 
     uploadName = 'rxbus'
     //版本号
@@ -45,7 +45,7 @@ ext  {
     //描述，不重要
     desc = 'project rxbus desc '
     //网站，不重要
-    website = 'https://github.com/goEcar/RxbusLib'
+    website = 'https://github.com/yzxclh0205'
 
     licences = ['Apache-2.0']
 }
