@@ -38,32 +38,42 @@ public class RxBus {
 
 
     public void register(Object target) {
+        Class<?> aClass = target.getClass();
         String clsName = target.getClass().getName();
         EventBinder<Object> eventBinder = eventBinders.get(clsName);
 
-        try {
-            if (eventBinder == null) {
-                Class<?> eventBindingClass = Class.forName(clsName + "$$BindEvent");
+        Class<?> eventBindingClass = null;
+        if (eventBinder == null) {
+            eventBindingClass = findClass(aClass);
+            try {
                 eventBinder = (EventBinder) eventBindingClass.newInstance();
-                eventBinders.put(clsName,eventBinder);
+                eventBinders.put(clsName, eventBinder);
+                eventBinder.register(target);
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
             }
-            eventBinder.register(target);
+        }
+    }
 
+    private Class<?> findClass(Class clazz) {
+        Class<?> aClass;
+        try {
+            aClass = Class.forName(clazz.getName() + "$$BindEvent");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            aClass = findClass(clazz.getSuperclass());
         }
+        return aClass;
     }
 
 
     public void unregister(Object object) {
-        if(eventBinders!=null && object!=null){
+        if (eventBinders != null && object != null) {
             String clsName = object.getClass().getName();
             EventBinder<Object> objectEventBinder = eventBinders.remove(clsName);
-            if(objectEventBinder!=null){
+            if (objectEventBinder != null) {
                 objectEventBinder.unRegister();
             }
         }
@@ -105,12 +115,12 @@ public class RxBus {
                         }
                     })
                     .observeOn(observeOn);
-            return handleStrategy(rxBusEventFlowable,strategy).subscribe(consumer);
+            return handleStrategy(rxBusEventFlowable, strategy).subscribe(consumer);
         }
         return null;
     }
 
-    public Flowable<RxBusEvent> handleStrategy(Flowable<RxBusEvent> o, String strategy){
+    public Flowable<RxBusEvent> handleStrategy(Flowable<RxBusEvent> o, String strategy) {
         switch (strategy) {
             case RxBusStategy.DROP:
                 o = o.onBackpressureDrop();

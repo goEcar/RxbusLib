@@ -1,6 +1,7 @@
 package com.ecar.epark.ppt_apt_simple;
 
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
@@ -42,6 +43,12 @@ public class MainActivitySub extends MainActivity {
     }
 //
 
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
     public static class Tes{
         String a;
     }
@@ -50,6 +57,6 @@ public class MainActivitySub extends MainActivity {
     public void onClick(View v) {
         TestBean bean = new TestBean();
         bean.setName("onClick1");
-        RxBus.getDefault().post(bean,"asb");
+        RxBus.getDefault().post(bean,"asb1");
     }
 }
