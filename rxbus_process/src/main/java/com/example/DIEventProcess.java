@@ -8,10 +8,12 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.TypeVariableName;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,9 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
@@ -41,7 +46,10 @@ public class DIEventProcess extends AbstractProcessor {
 
     private final static String COMPOSITE_DISPOSABLE_FIELD = "compositeDisposable";
     private final static String SOURCE_PROXY_FIELD = "sourceInstance";
-    private Map<TypeElement, LinkedList<MethodData>> map = new HashMap<>();
+    private final static String SUFFIX = "$$BindEvent";
+
+    private Map<TypeElement, EventInfo> map = new HashMap<>();
+    Set<String> erasedTargetNames = new LinkedHashSet<>();
     private Elements elementUtils;
     private ClassName defaultEventClazz;
     private ClassName rxbusHelper;
@@ -52,6 +60,7 @@ public class DIEventProcess extends AbstractProcessor {
     private Filer filer;
     private Messager messager;
     private ClassName consumermpositeDisposable;
+
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -71,38 +80,12 @@ public class DIEventProcess extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
         initConstantObj();
         getData(roundEnvironment);
-
-        for (Map.Entry<TypeElement, LinkedList<MethodData>> entry : map.entrySet()) {
-            TypeElement key = entry.getKey();
-            TypeName typeName = TypeName.get(key.asType());
-
-            FieldSpec compositeSpec = generateCompositeDisposableField();
-            FieldSpec instanceSpec = generateProxySourceInstanceCode(typeName);
-            MethodSpec registerBuilder = generateRegisterMethodCode(entry);
-            MethodSpec unRegisterBuilder = generateUnRegisterMethodCode();
-
-            TypeSpec aptApi = TypeSpec.classBuilder(key.getSimpleName() + "$$BindEvent")
-                    .addModifiers(Modifier.PUBLIC)
-                    .addMethod(registerBuilder)
-                    .addMethod(unRegisterBuilder)
-                    .addField(compositeSpec)
-                    .addField(instanceSpec)
-//                    .addTypeVariable(TypeVariableName.get("T",typeName)) //----<T extends MainActivity>
-                    .addSuperinterface(ParameterizedTypeName.get(ClassName.get("rxbus.ecaray.com.rxbuslib.rxbus","EventBinder"),typeName))//---<implements ViewBinder<MainActivity>>
-                    .build();
-            String packageName = getPackageName(key);
-            try {
-                JavaFile.builder(packageName, aptApi).build().writeTo(processingEnv.getFiler());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-
+        handleData();
         return false;
     }
 
-    private void getData(RoundEnvironment roundEnvironment){
+
+    private void getData(RoundEnvironment roundEnvironment) {
         Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(RxBusReact.class);
         for (Element element : elements) {
             RxBusReact annotation = element.getAnnotation(RxBusReact.class);
@@ -114,10 +97,13 @@ public class DIEventProcess extends AbstractProcessor {
                 continue;
             }
             TypeElement typeElement = (TypeElement) enclosingElement;
-            LinkedList<MethodData> methodDatas = map.get(typeElement);
-            if (methodDatas == null) {
-                methodDatas = new LinkedList<>();
-                map.put(typeElement, methodDatas);
+            erasedTargetNames.add(typeElement.toString());
+//            LinkedList<MethodData> methodDatas = map.get(typeElement);
+            EventInfo eventInfo = map.get(typeElement);
+            if (eventInfo == null) {
+                eventInfo = new EventInfo();
+                eventInfo.methodDatas = new LinkedList<>();
+                map.put(typeElement, eventInfo);
             }
             MethodData methodData = new MethodData();
             methodData.methodName = element.getSimpleName().toString();
@@ -130,15 +116,84 @@ public class DIEventProcess extends AbstractProcessor {
             methodData.observeOn = annotation.observeOn();
             methodData.subscribeOn = annotation.subscribeOn();
             methodData.strategy = annotation.strategy();
-            methodData = extractMethodParameterInfo((ExecutableElement) element,methodData);
-            methodDatas.add(methodData);
+            methodData = extractMethodParameterInfo((ExecutableElement) element, methodData);
+            eventInfo.addData(methodData);
+        }
+
+        for (Map.Entry<TypeElement, EventInfo> entry : map.entrySet()) {
+            String parentClassFqcn = findParentFqcn(entry.getKey(), erasedTargetNames);
+            if (parentClassFqcn != null) {
+                entry.getValue().parentClazzName = (parentClassFqcn + SUFFIX);
+            }
         }
     }
+
+    private void handleData() {
+        for (Map.Entry<TypeElement, EventInfo> entry : map.entrySet()) {
+            TypeElement key = entry.getKey();
+            EventInfo eventInfo = entry.getValue();
+            TypeName typeName = TypeName.get(key.asType());
+
+            TypeSpec.Builder typeBuilder = TypeSpec.classBuilder(key.getSimpleName() + SUFFIX);
+            typeBuilder.addTypeVariable(TypeVariableName.get("T", typeName));
+            String packageName = getPackageName(key);
+            if (eventInfo.parentClazzName != null) {
+                TypeSpec parent = TypeSpec.classBuilder(eventInfo.parentClazzName)
+                        .addModifiers(Modifier.PUBLIC)
+                        .addTypeVariable(TypeVariableName.get("T"))
+//                        .addSuperinterface(ParameterizedTypeName.get(ClassName.get("rxbus.ecaray.com.rxbuslib.rxbus","EventBinder"),typeName))
+                        .build();
+//                clazzContent.append(" extends ").append(eventInfo.parentClazzName).append("<T>");
+                typeBuilder.superclass(ParameterizedTypeName.get(ClassName.bestGuess(parent.name), TypeVariableName.get("T")));
+//                typeBuilder.superclass(ClassName.bestGuess(parent.));
+            } else {
+                FieldSpec instanceSpec = generateProxySourceInstanceCode(typeName);
+                FieldSpec compositeSpec = generateCompositeDisposableField();
+                typeBuilder.addField(instanceSpec);
+                typeBuilder.addField(compositeSpec);
+                //---<implements ViewBinder<MainActivity>>
+//                clazzContent.append(" implements BindEvent<T>");select
+//                typeBuilder.addSuperinterface(ParameterizedTypeName.get(ClassName.get("rxbus.ecaray.com.rxbuslib.rxbus","EventBinder"),typeName));
+                typeBuilder.addSuperinterface(ParameterizedTypeName.get(ClassName.get("rxbus.ecaray.com.rxbuslib.rxbus", "EventBinder"), TypeVariableName.get("T")));
+            }
+
+            MethodSpec registerBuilder = generateRegisterMethodCode(entry);
+            MethodSpec unRegisterBuilder = generateUnRegisterMethodCode(entry);
+
+
+            typeBuilder.addModifiers(Modifier.PUBLIC)
+                    .addMethod(registerBuilder)
+                    .addMethod(unRegisterBuilder);
+
+            ////                    .addTypeVariable(TypeVariableName.get("T",typeName)) //----<T extends MainActivity>
+//                .addSuperinterface(ParameterizedTypeName.get(ClassName.get("rxbus.ecaray.com.rxbuslib.rxbus","EventBinder"),typeName))//---<implements ViewBinder<MainActivity>>
+            //----<T extends MainActivity>
+
+
+            try {
+                JavaFile.builder(packageName, typeBuilder.build()).build().writeTo(processingEnv.getFiler());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+//    private void generateClassInfo(){
+//        TypeSpec aptApi = TypeSpec.classBuilder(key.getSimpleName() + SUFFIX)
+//                .addModifiers(Modifier.PUBLIC)
+//                .addMethod(registerBuilder)
+//                .addMethod(unRegisterBuilder)
+//                .addField(compositeSpec)
+//                .addField(instanceSpec)
+////                    .addTypeVariable(TypeVariableName.get("T",typeName)) //----<T extends MainActivity>
+//                .addSuperinterface(ParameterizedTypeName.get(ClassName.get("rxbus.ecaray.com.rxbuslib.rxbus","EventBinder"),typeName))//---<implements ViewBinder<MainActivity>>
+//                .build();
+//    }
 
     /**
      *
      */
-    private MethodData extractMethodParameterInfo(ExecutableElement methodElement,MethodData methodData) {
+    private MethodData extractMethodParameterInfo(ExecutableElement methodElement, MethodData methodData) {
         List<? extends VariableElement> methodParams = methodElement.getParameters();
         if (methodParams != null) {
             if (methodParams.size() == 1) {
@@ -169,35 +224,39 @@ public class DIEventProcess extends AbstractProcessor {
 
     private FieldSpec generateProxySourceInstanceCode(TypeName typeName) {
         FieldSpec fieldSpec = FieldSpec
-                .builder(typeName, SOURCE_PROXY_FIELD, Modifier.PROTECTED)
+//                .builder(typeName, SOURCE_PROXY_FIELD, Modifier.PROTECTED)
+                .builder(TypeVariableName.get("T"), SOURCE_PROXY_FIELD, Modifier.PROTECTED)
                 .build();
         return fieldSpec;
     }
 
-    private MethodSpec generateRegisterMethodCode(Map.Entry<TypeElement, LinkedList<MethodData>> entry) {
+    private MethodSpec generateRegisterMethodCode(Map.Entry<TypeElement, EventInfo> entry) {
         TypeElement key = entry.getKey();
-        LinkedList<MethodData> value = entry.getValue();
+        EventInfo value = entry.getValue();
 
         MethodSpec.Builder methodSpecBuilder = MethodSpec
                 .methodBuilder("register")
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override.class)
-                .addParameter(TypeName.get(key.asType()), "target")
+//                .addParameter(TypeName.get(key.asType()), "target")
+                .addParameter(TypeVariableName.get("T"), "target")
                 .returns(void.class);
 
-        methodSpecBuilder.addStatement(SOURCE_PROXY_FIELD + "=target");
+        if (value.parentClazzName != null) {
+            methodSpecBuilder.addStatement("super.register(target)");
+        } else {
+            methodSpecBuilder.addStatement(SOURCE_PROXY_FIELD + "=target");
+            methodSpecBuilder.beginControlFlow("if(compositeDisposable==null || compositeDisposable.isDisposed())");
+            methodSpecBuilder.addStatement("compositeDisposable = new CompositeDisposable()");
+            methodSpecBuilder.endControlFlow();
+        }
 
-        methodSpecBuilder.beginControlFlow("if(compositeDisposable==null || compositeDisposable.isDisposed())");
-        methodSpecBuilder.addStatement("compositeDisposable = new CompositeDisposable()");
-        methodSpecBuilder.endControlFlow();
 
-
-
-        for (MethodData methodData : value) {
+        for (MethodData methodData : value.methodDatas) {
             String methodName = methodData.methodName;
 
             String disposableName = methodName + "_disposable";
-            ClassName filterClazz  = ClassName.bestGuess(methodData.parameterClassFullName);
+            ClassName filterClazz = ClassName.bestGuess(methodData.parameterClassFullName);
             String observeOn = generateInvokeRegisterCode(methodData.observeOn);
             String subscribeOn = generateInvokeRegisterCode(methodData.subscribeOn);
             methodSpecBuilder.addStatement(
@@ -205,11 +264,11 @@ public class DIEventProcess extends AbstractProcessor {
 //                            ".filter(" +
 //                            generateFilterCode(methodData)+
                             ".register(" +
-                            generateConsumerCode(SOURCE_PROXY_FIELD, methodName,methodData) +
-                            ","+methodData.parameterClassFullName+".class" + ",$S" + ","+subscribeOn+ ","+observeOn +",$S"+")"
+                            generateConsumerCode(SOURCE_PROXY_FIELD, methodName, methodData) +
+                            "," + methodData.parameterClassFullName + ".class" + ",$S" + "," + subscribeOn + "," + observeOn + ",$S" + ")"
                     , disposable, rxbusHelper
-                    , consumer, defaultEventClazz, defaultEventClazz,filterClazz
-                    ,  methodData.tag , methodData.strategy
+                    , consumer, defaultEventClazz, defaultEventClazz, filterClazz
+                    , methodData.tag, methodData.strategy
             );
 
             methodSpecBuilder.addStatement("compositeDisposable.add(" + disposableName + ")");
@@ -219,10 +278,10 @@ public class DIEventProcess extends AbstractProcessor {
         return methodSpecBuilder.build();
     }
 
-    private void initConstantObj(){
-        if(defaultEventClazz == null){
-            predicate =  ClassName.bestGuess("io.reactivex.functions.Predicate");
-            defaultEventClazz =  ClassName.bestGuess("rxbus.ecaray.com.rxbuslib.rxbus.RxBusEvent");
+    private void initConstantObj() {
+        if (defaultEventClazz == null) {
+            predicate = ClassName.bestGuess("io.reactivex.functions.Predicate");
+            defaultEventClazz = ClassName.bestGuess("rxbus.ecaray.com.rxbuslib.rxbus.RxBusEvent");
             rxbusHelper = ClassName.bestGuess("rxbus.ecaray.com.rxbuslib.rxbus.RxBus");
             consumer = ClassName.bestGuess("io.reactivex.functions.Consumer");
             disposable = ClassName.bestGuess("io.reactivex.disposables.Disposable");
@@ -230,12 +289,12 @@ public class DIEventProcess extends AbstractProcessor {
         }
     }
 
-    private String generateConsumerCode(String sourceInstanceName, String sourceInstanceMethodName,MethodData methodData) {
+    private String generateConsumerCode(String sourceInstanceName, String sourceInstanceMethodName, MethodData methodData) {
         return
                 "new $T<$T>(){\n" +
                         "@Override\n" +
                         "public void accept($T o) throws Exception {\n" +
-                            "if("+sourceInstanceName+"==null)return;\n"+
+                        "if(" + sourceInstanceName + "==null)return;\n" +
 //                        sourceInstanceName + "." + sourceInstanceMethodName + "(("+methodData.parameterClassSimpleName+")o.getObj());\n" +
                         sourceInstanceName + "." + sourceInstanceMethodName + "(($T)o.getObj());\n" +
                         "}\n" +
@@ -247,8 +306,8 @@ public class DIEventProcess extends AbstractProcessor {
                 "new $T<$T>(){\n" +
                         "@Override\n" +
                         "public boolean test($T o) throws Exception {\n" +
-                            "return "+ methodData.parameterClassSimpleName +".class == " + "o.getObj().getClass()"
-                            +" && $S"+ ".equals(o.getTag());"+
+                        "return " + methodData.parameterClassSimpleName + ".class == " + "o.getObj().getClass()"
+                        + " && $S" + ".equals(o.getTag());" +
                         "}\n" +
                         "}";
     }
@@ -272,7 +331,6 @@ public class DIEventProcess extends AbstractProcessor {
     }
 
 
-
     /**
      * judge the java basic type
      *
@@ -283,7 +341,7 @@ public class DIEventProcess extends AbstractProcessor {
         return element.asType().getKind().isPrimitive();
     }
 
-    private String getParameterFullName(VariableElement variableElement){
+    private String getParameterFullName(VariableElement variableElement) {
         String typeString = "";
         if (isBasicType(variableElement)) {
             switch (variableElement.asType().getKind()) {
@@ -360,42 +418,46 @@ public class DIEventProcess extends AbstractProcessor {
 
     private String generateInvokeRegisterCode(String scheduler) {
         StringBuilder codeBuilder = new StringBuilder();
-            switch (scheduler) {
-                case RxBusScheduler.MAIN_THREAD:
-                    codeBuilder.append("io.reactivex.android.schedulers.AndroidSchedulers.mainThread()");
-                    break;
-                case RxBusScheduler.IO:
-                    codeBuilder.append("io.reactivex.schedulers.Schedulers.io()");
-                    break;
-                case RxBusScheduler.NEW_THREAD:
-                    codeBuilder.append("io.reactivex.schedulers.Schedulers.newThread()");
-                    break;
-                case RxBusScheduler.COMPUTATION:
-                    codeBuilder.append("io.reactivex.schedulers.Schedulers.computation()");
-                    break;
-                case RxBusScheduler.TRAMPOLINE:
-                    codeBuilder.append("io.reactivex.schedulers.Schedulers.trampoline()");
-                    break;
-                default:
-                    break;
+        switch (scheduler) {
+            case RxBusScheduler.MAIN_THREAD:
+                codeBuilder.append("io.reactivex.android.schedulers.AndroidSchedulers.mainThread()");
+                break;
+            case RxBusScheduler.IO:
+                codeBuilder.append("io.reactivex.schedulers.Schedulers.io()");
+                break;
+            case RxBusScheduler.NEW_THREAD:
+                codeBuilder.append("io.reactivex.schedulers.Schedulers.newThread()");
+                break;
+            case RxBusScheduler.COMPUTATION:
+                codeBuilder.append("io.reactivex.schedulers.Schedulers.computation()");
+                break;
+            case RxBusScheduler.TRAMPOLINE:
+                codeBuilder.append("io.reactivex.schedulers.Schedulers.trampoline()");
+                break;
+            default:
+                break;
         }
         return codeBuilder.toString();
     }
 
-    private MethodSpec generateUnRegisterMethodCode() {
+    private MethodSpec generateUnRegisterMethodCode(Map.Entry<TypeElement, EventInfo> entry) {
         MethodSpec.Builder methodSpecBuilder = MethodSpec
                 .methodBuilder("unRegister")
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override.class)
+//                .addParameter(TypeName.get(entry.getKey().asType()), "target")
                 .returns(void.class);
-        methodSpecBuilder.addStatement(SOURCE_PROXY_FIELD + "= null");
-        methodSpecBuilder.beginControlFlow(
-                "if (compositeDisposable != null && !compositeDisposable.isDisposed())");
-        methodSpecBuilder.addStatement("compositeDisposable.dispose()");
-        methodSpecBuilder.addStatement("compositeDisposable = null");
+        if (entry.getValue().parentClazzName != null) {
+            methodSpecBuilder.addStatement("super.unRegister()");
+        }else {
+            methodSpecBuilder.addStatement(SOURCE_PROXY_FIELD + "= null");
+            methodSpecBuilder.beginControlFlow(
+                    "if (compositeDisposable != null && !compositeDisposable.isDisposed())");
+            methodSpecBuilder.addStatement("compositeDisposable.dispose()");
+            methodSpecBuilder.addStatement("compositeDisposable = null");
 
-        methodSpecBuilder.endControlFlow();
-
+            methodSpecBuilder.endControlFlow();
+        }
         return methodSpecBuilder.build();
     }
 
@@ -412,13 +474,28 @@ public class DIEventProcess extends AbstractProcessor {
                 String.format(msg, args));
     }
 
-    private static class MethodData {
-        String methodName;
-        String parameterClassSimpleName;
-        String parameterClassFullName;
-        String tag;
-        String subscribeOn;
-        String observeOn;
-        String strategy;
+    /**
+     * Finds the parent barbershop type in the supplied set, if any.
+     */
+    private String findParentFqcn(TypeElement typeElement, Set<String> parents) {
+        TypeMirror type;
+        while (true) {
+            type = typeElement.getSuperclass();
+            if (type.getKind() == TypeKind.NONE) {
+                return null;
+            }
+            typeElement = (TypeElement) ((DeclaredType) type).asElement();
+            if (parents.contains(typeElement.toString())) {
+                String packageName = getPackageName(typeElement);
+                return packageName + "." + getClassName(typeElement, packageName);
+            }
+        }
     }
+
+    private static String getClassName(TypeElement type, String packageName) {
+        int packageLen = packageName.length() + 1;
+        return type.getQualifiedName().toString().substring(packageLen).replace(".", "$");
+    }
+
+
 }
