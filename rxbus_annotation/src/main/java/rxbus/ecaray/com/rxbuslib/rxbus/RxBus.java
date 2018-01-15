@@ -37,6 +37,8 @@ public class RxBus {
     private static Map<String, EventBinder<Object>> eventBinders = new HashMap<>();
 
 
+    public static final String ANDROID_PREFIX = "android.";
+    public static final String JAVA_PREFIX = "java.";
     public void register(Object target) {
         Class<?> aClass = target.getClass();
         String clsName = target.getClass().getName();
@@ -45,6 +47,9 @@ public class RxBus {
         Class<?> eventBindingClass = null;
         if (eventBinder == null) {
             eventBindingClass = findClass(aClass);
+            if(eventBindingClass == null){
+                return;
+            }
             try {
                 eventBinder = (EventBinder) eventBindingClass.newInstance();
                 eventBinders.put(clsName, eventBinder);
@@ -59,6 +64,11 @@ public class RxBus {
 
     private Class<?> findClass(Class clazz) {
         Class<?> aClass;
+        String clazzNmae = clazz.getName();
+        if (clazzNmae.startsWith(ANDROID_PREFIX) || clazzNmae.startsWith(JAVA_PREFIX)) {
+//                if (debug) Log.d(TAG, "MISS: Reached framework class. Abandoning search.");
+            return null;
+        }
         try {
             aClass = Class.forName(clazz.getName() + "$$BindEvent");
         } catch (ClassNotFoundException e) {

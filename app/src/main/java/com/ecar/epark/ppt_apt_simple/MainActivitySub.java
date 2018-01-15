@@ -37,10 +37,10 @@ public class MainActivitySub extends MainActivity {
 //        activity_main.setOnClickListener(this);
 //    }
 //
-    @RxBusReact(clazz = Tes.class,tag = "asb1")
-    public void testRxBus1(TestBean content){
-        textView.setText(content.getName());
-    }
+//    @RxBusReact(clazz = Tes.class,tag = "asb1")
+//    public void testRxBus1(TestBean content){
+//        textView.setText(content.getName());
+//    }
 //
 
 
