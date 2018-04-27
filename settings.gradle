@@ -1,1 +1,1 @@
-include ':app', ':rxbus_process', ':rxbus_annotation', ':rxbus_proxy', ':simulationlib'
+include ':app', ':rxbus_process', ':rxbus_annotation'

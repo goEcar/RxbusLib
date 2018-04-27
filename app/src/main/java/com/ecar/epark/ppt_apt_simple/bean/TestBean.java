@@ -1,10 +1,12 @@
-package com.ecar.epark.simulationlib;
+package com.ecar.epark.ppt_apt_simple.bean;
 
 /**
- * Created by Administrator on 2018/1/11 0011.
+ * @author Carl
+ * @version 1.0
+ * @since 2018/4/27
  */
-
 public class TestBean {
+
     private String name;
 
     public String getName() {
