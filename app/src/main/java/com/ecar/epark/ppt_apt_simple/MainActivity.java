@@ -4,15 +4,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 
-import com.ecar.epark.simulationlib.TestBean;
+import com.ecar.epark.ppt_apt_simple.bean.TestBean;
 
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.Flowable;
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBus;
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBusReact;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
 
     View activity_main;
     TextView textView;
@@ -53,5 +56,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         TestBean bean = new TestBean();
         bean.setName("onClick");
         RxBus.getDefault().post(bean,"asb");
+
+
     }
 }

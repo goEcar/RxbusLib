@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/RxbusLib.iml" filepath="$PROJECT_DIR$/RxbusLib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rxbus_annotation/rxbus_annotation.iml" filepath="$PROJECT_DIR$/rxbus_annotation/rxbus_annotation.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rxbus_process/rxbus_process.iml" filepath="$PROJECT_DIR$/rxbus_process/rxbus_process.iml" />
+    </modules>
+  </component>
+</project>
