@@ -1,1 +1,1 @@
-include ':app', ':rxbus_process', ':rxbus_annotation'
+include ':app', ':rxbus_process', ':rxbus_annotation', ':rxbus_depend'
