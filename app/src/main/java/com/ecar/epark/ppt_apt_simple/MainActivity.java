@@ -10,25 +10,28 @@ import com.ecar.epark.ppt_apt_simple.bean.TestBean;
 
 import java.util.concurrent.TimeUnit;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.reactivex.Flowable;
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBus;
 import rxbus.ecaray.com.rxbuslib.rxbus.RxBusReact;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-
+    @BindView(R.id.activity_main)
     View activity_main;
+
+    @BindView(R.id.tx_content)
     TextView textView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
         //1.方式1
 //        MainActivit y$$BindView.bindView(this);
         //1.
-        textView = (TextView) findViewById(R.id.tx_content);
-        activity_main = findViewById(R.id.activity_main);
         RxBus.getDefault().register(this);
         textView.setText("APT");
         textView.postDelayed(new Runnable() {

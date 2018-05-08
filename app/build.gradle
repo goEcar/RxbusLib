@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 27
     defaultConfig {
         applicationId "com.ecar.epark.ppt_apt_simple"
         minSdkVersion 15
@@ -21,14 +21,17 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
 
+
+    implementation project(':rxbus_depend')
+
     annotationProcessor project(':rxbus_process')
-    compile project(':rxbus_annotation')
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
 
 }
 //aar打包
